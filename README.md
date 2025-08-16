@@ -29,7 +29,7 @@ A complete React-based 2D platformer game built with Three.js and React Three Fi
 1. Clone the repository:
 ```bash
 git clone https://github.com/rtre84/random-2d-platformer.git
-cd 2d-platformer-boilerplate
+cd random-2d-platformer
 ```
 
 2. Install dependencies:
