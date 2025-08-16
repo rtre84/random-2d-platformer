@@ -21,7 +21,7 @@ interface CollisionResult {
   isGrounded: boolean;
 }
 
-// AABB (Axis-Aligned Bounding Box) collision detection
+// Simple AABB (Axis-Aligned Bounding Box) collision detection
 export function checkAABBCollision(
   pos1: Position,
   size1: Size,
@@ -43,7 +43,7 @@ export function checkAABBCollision(
   );
 }
 
-// Check collisions with all platforms
+// Check collisions with platforms and resolve them
 export function checkCollisions(
   playerPosition: Position,
   playerSize: Size,
@@ -58,21 +58,22 @@ export function checkCollisions(
   const playerHalfHeight = playerSize.height / 2;
   const playerHalfDepth = playerSize.depth / 2;
 
+  // Check collision with each platform
   for (const platform of platforms) {
     const platformHalfWidth = platform.size.width / 2;
     const platformHalfHeight = platform.size.height / 2;
     const platformHalfDepth = platform.size.depth / 2;
 
-    // Check if player is colliding with platform
+    // Only check collision if objects are overlapping
     if (checkAABBCollision(newPosition, playerSize, platform.position, platform.size)) {
-      // Calculate overlap on each axis
+      // Calculate overlap distances for each axis
       const overlapX = Math.abs(newPosition.x - platform.position.x) - (playerHalfWidth + platformHalfWidth);
       const overlapY = Math.abs(newPosition.y - platform.position.y) - (playerHalfHeight + platformHalfHeight);
       const overlapZ = Math.abs(newPosition.z - platform.position.z) - (playerHalfDepth + platformHalfDepth);
 
-      // Find the axis with minimum overlap (that's our collision normal)
+      // Resolve collision on the axis with the smallest overlap
       if (overlapY > overlapX && overlapY > overlapZ) {
-        // Horizontal collision (left/right)
+        // Horizontal collision (X-axis)
         if (newPosition.x < platform.position.x) {
           newPosition.x = platform.position.x - platformHalfWidth - playerHalfWidth;
         } else {
@@ -80,23 +81,23 @@ export function checkCollisions(
         }
         newVelocity.x = 0;
       } else if (overlapX > overlapZ) {
-        // Vertical collision (top/bottom)
+        // Vertical collision (Y-axis)
         if (newPosition.y < platform.position.y) {
-          // Player is below platform
+          // Player is below platform - hit head
           newPosition.y = platform.position.y - platformHalfHeight - playerHalfHeight;
           if (newVelocity.y > 0) {
             newVelocity.y = 0;
           }
         } else {
-          // Player is above platform (landing on top)
+          // Player is above platform - landing
           newPosition.y = platform.position.y + platformHalfHeight + playerHalfHeight;
-          if (newVelocity.y < 0) {
+          if (newVelocity.y <= 0) {
             newVelocity.y = 0;
             isGrounded = true;
           }
         }
       } else {
-        // Z-axis collision (depth)
+        // Depth collision (Z-axis) - for 2D game this is rarely used
         if (newPosition.z < platform.position.z) {
           newPosition.z = platform.position.z - platformHalfDepth - playerHalfDepth;
         } else {
@@ -114,31 +115,41 @@ export function checkCollisions(
   };
 }
 
-// Helper function to check if player is on top of any platform
+// Check if player is standing on ground or platform
 export function checkGrounded(
   playerPosition: Position,
   playerSize: Size,
-  platforms: Platform[]
+  platforms: Platform[],
+  tolerance: number = 0.1
 ): boolean {
   const playerBottom = playerPosition.y - playerSize.height / 2;
-  const tolerance = 0.1;
 
   for (const platform of platforms) {
     const platformTop = platform.position.y + platform.size.height / 2;
     const platformLeft = platform.position.x - platform.size.width / 2;
     const platformRight = platform.position.x + platform.size.width / 2;
 
-    // Check if player is horizontally aligned with platform
+    // Check horizontal alignment
     const playerLeft = playerPosition.x - playerSize.width / 2;
     const playerRight = playerPosition.x + playerSize.width / 2;
 
     const horizontalOverlap = playerRight > platformLeft && playerLeft < platformRight;
-    const verticallyOnTop = Math.abs(playerBottom - platformTop) < tolerance;
+    const verticalAlignment = Math.abs(playerBottom - platformTop) < tolerance;
 
-    if (horizontalOverlap && verticallyOnTop) {
+    if (horizontalOverlap && verticalAlignment) {
       return true;
     }
   }
 
   return false;
 }
+
+// Physics constants
+export const PHYSICS_CONSTANTS = {
+  GRAVITY: -25,
+  JUMP_FORCE: 12,
+  MOVE_SPEED: 8,
+  FRICTION: 0.85,
+  MAX_FALL_SPEED: -20,
+  MAX_MOVE_SPEED: 15
+};

@@ -1,6 +1,14 @@
 # Overview
 
-This is a 3D platformer game built with React Three Fiber and Three.js. Players control a character that can move left/right and jump between platforms in a 3D environment. The game features physics-based movement, collision detection, scoring, and audio feedback. The application uses a full-stack architecture with Express.js backend, Vite for development, and Drizzle ORM for database management.
+This is a 2D platformer game built with React Three Fiber and Three.js. The project now includes both a working game implementation and clean boilerplate code for new game development. Players control a character that can move left/right and jump between platforms in a 2D perspective using an orthographic camera. The game features physics-based movement, AABB collision detection, scoring, level progression, and audio feedback. The application uses a full-stack architecture with Express.js backend, Vite for development, and Drizzle ORM for database management.
+
+## Recent Changes (January 2025)
+- Created complete 2D platformer game boilerplate with simplified, clean code structure
+- Added new boilerplate components: SimpleGame, SimplePlayer, SimplePlatform, SimpleGameUI
+- Implemented new game state management system (useGame.tsx) with level progression
+- Created comprehensive physics system with AABB collision detection
+- Added game documentation (GAME_BOILERPLATE.md) with usage instructions
+- Main app now uses clean boilerplate version by default
 
 # User Preferences
 
