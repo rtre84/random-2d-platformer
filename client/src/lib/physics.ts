@@ -66,31 +66,31 @@ export function checkCollisions(
 
     // Only check collision if objects are overlapping
     if (checkAABBCollision(newPosition, playerSize, platform.position, platform.size)) {
-      // Calculate overlap distances for each axis
-      const overlapX = Math.abs(newPosition.x - platform.position.x) - (playerHalfWidth + platformHalfWidth);
-      const overlapY = Math.abs(newPosition.y - platform.position.y) - (playerHalfHeight + platformHalfHeight);
-      const overlapZ = Math.abs(newPosition.z - platform.position.z) - (playerHalfDepth + platformHalfDepth);
+      // Calculate overlap distances for each axis (how much we need to separate)
+      const overlapX = (playerHalfWidth + platformHalfWidth) - Math.abs(newPosition.x - platform.position.x);
+      const overlapY = (playerHalfHeight + platformHalfHeight) - Math.abs(newPosition.y - platform.position.y);
+      const overlapZ = (playerHalfDepth + platformHalfDepth) - Math.abs(newPosition.z - platform.position.z);
 
-      // Resolve collision on the axis with the smallest overlap
-      if (overlapY > overlapX && overlapY > overlapZ) {
+      // Resolve collision on the axis with the smallest overlap (shortest separation distance)
+      if (overlapX < overlapY && overlapX < overlapZ) {
         // Horizontal collision (X-axis)
         if (newPosition.x < platform.position.x) {
-          newPosition.x = platform.position.x - platformHalfWidth - playerHalfWidth;
+          newPosition.x = platform.position.x - platformHalfWidth - playerHalfWidth - 0.01;
         } else {
-          newPosition.x = platform.position.x + platformHalfWidth + playerHalfWidth;
+          newPosition.x = platform.position.x + platformHalfWidth + playerHalfWidth + 0.01;
         }
         newVelocity.x = 0;
-      } else if (overlapX > overlapZ) {
+      } else if (overlapY < overlapZ) {
         // Vertical collision (Y-axis)
         if (newPosition.y < platform.position.y) {
-          // Player is below platform - hit head
-          newPosition.y = platform.position.y - platformHalfHeight - playerHalfHeight;
+          // Player is below platform - hitting head on bottom of platform
+          newPosition.y = platform.position.y - platformHalfHeight - playerHalfHeight - 0.01;
           if (newVelocity.y > 0) {
             newVelocity.y = 0;
           }
         } else {
-          // Player is above platform - landing
-          newPosition.y = platform.position.y + platformHalfHeight + playerHalfHeight;
+          // Player is above platform - landing on top
+          newPosition.y = platform.position.y + platformHalfHeight + playerHalfHeight + 0.01;
           if (newVelocity.y <= 0) {
             newVelocity.y = 0;
             isGrounded = true;
@@ -99,9 +99,9 @@ export function checkCollisions(
       } else {
         // Depth collision (Z-axis) - for 2D game this is rarely used
         if (newPosition.z < platform.position.z) {
-          newPosition.z = platform.position.z - platformHalfDepth - playerHalfDepth;
+          newPosition.z = platform.position.z - platformHalfDepth - playerHalfDepth - 0.01;
         } else {
-          newPosition.z = platform.position.z + platformHalfDepth + playerHalfDepth;
+          newPosition.z = platform.position.z + platformHalfDepth + playerHalfDepth + 0.01;
         }
         newVelocity.z = 0;
       }

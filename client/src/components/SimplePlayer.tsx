@@ -89,10 +89,8 @@ export function SimplePlayer() {
     newPosition = collisionResult.position;
     newVelocity = collisionResult.velocity;
     
-    // Set grounded state from collision
-    if (collisionResult.isGrounded) {
-      setGrounded(true);
-    }
+    // Update grounded state based on collision results
+    setGrounded(collisionResult.isGrounded);
 
     // Ground collision check (safety net)
     if (newPosition.y <= -4.5) {
@@ -101,18 +99,20 @@ export function SimplePlayer() {
       setGrounded(true);
     }
 
-    // Update player state
+    // Update player state BEFORE updating mesh
     updatePlayer(newPosition, newVelocity);
+  });
 
-    // Update mesh position for rendering
-    if (meshRef.current) {
+  // Update mesh position when playerPosition changes
+  useEffect(() => {
+    if (meshRef.current && playerPosition) {
       meshRef.current.position.set(
-        newPosition.x, 
-        newPosition.y, 
-        newPosition.z
+        playerPosition.x, 
+        playerPosition.y, 
+        playerPosition.z
       );
     }
-  });
+  }, [playerPosition]);
 
   return (
     <mesh 
