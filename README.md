@@ -2,7 +2,7 @@
 
 A complete React-based 2D platformer game built with Three.js and React Three Fiber. This project provides both a working game implementation and clean boilerplate code for new game development.
 
-![Game Preview](https://via.placeholder.com/800x400/87CEEB/000000?text=2D+Platformer+Game)
+![Game Preview](./misc_assets/gameplay.png)
 
 ## 🎮 Features
 
