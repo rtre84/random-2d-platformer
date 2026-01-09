@@ -153,3 +153,87 @@ export const PHYSICS_CONSTANTS = {
   MAX_FALL_SPEED: -20,
   MAX_MOVE_SPEED: 15
 };
+
+// Enemy constants
+export const ENEMY_CONSTANTS = {
+  PATROL_SPEED: 3,
+  STOMP_VELOCITY_THRESHOLD: -2,
+  KNOCKBACK_FORCE: 8,
+  KNOCKBACK_UP_FORCE: 6,
+  STOMP_BOUNCE: 8
+};
+
+interface EnemyPlayerCollisionResult {
+  type: 'stomp' | 'hit' | 'none';
+  knockbackDirection?: number;
+}
+
+// Check collision between player and enemy
+export function checkEnemyPlayerCollision(
+  playerPosition: Position,
+  playerSize: Size,
+  playerVelocity: Position,
+  enemyPosition: Position,
+  enemySize: Size
+): EnemyPlayerCollisionResult {
+  // First check if they're colliding at all
+  if (!checkAABBCollision(playerPosition, playerSize, enemyPosition, enemySize)) {
+    return { type: 'none' };
+  }
+
+  const playerHalfHeight = playerSize.height / 2;
+  const enemyHalfHeight = enemySize.height / 2;
+
+  const playerBottom = playerPosition.y - playerHalfHeight;
+  const enemyTop = enemyPosition.y + enemyHalfHeight;
+
+  // Calculate vertical overlap
+  const verticalDifference = playerBottom - enemyTop;
+
+  // Player is falling and lands on top of enemy
+  const isStomp =
+    playerVelocity.y < ENEMY_CONSTANTS.STOMP_VELOCITY_THRESHOLD && // Falling fast enough
+    verticalDifference > -0.3 && verticalDifference < 0.1; // Close to top
+
+  if (isStomp) {
+    return { type: 'stomp' };
+  }
+
+  // Side collision - determine knock direction
+  const knockbackDirection = playerPosition.x < enemyPosition.x ? -1 : 1;
+  return {
+    type: 'hit',
+    knockbackDirection
+  };
+}
+
+// Check if enemy should reverse (edge detection)
+export function checkEnemyAtEdge(
+  enemyPosition: Position,
+  enemySize: Size,
+  platforms: Platform[],
+  direction: number
+): boolean {
+  const enemyHalfWidth = enemySize.width / 2;
+  const enemyBottom = enemyPosition.y - enemySize.height / 2;
+
+  // Check point in front of enemy at the edge
+  const checkX = enemyPosition.x + (direction * (enemyHalfWidth + 0.2));
+  const checkY = enemyBottom - 0.3; // Slightly below enemy
+
+  // See if there's a platform below that point
+  for (const platform of platforms) {
+    const platformTop = platform.position.y + platform.size.height / 2;
+    const platformLeft = platform.position.x - platform.size.width / 2;
+    const platformRight = platform.position.x + platform.size.width / 2;
+
+    const isAbovePlatform = checkY > platformTop - 0.5 && checkY < platformTop + 0.5;
+    const isOnPlatform = checkX > platformLeft && checkX < platformRight;
+
+    if (isAbovePlatform && isOnPlatform) {
+      return false; // There's ground ahead, don't reverse
+    }
+  }
+
+  return true; // No ground ahead, reverse!
+}

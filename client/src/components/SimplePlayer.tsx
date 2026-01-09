@@ -2,24 +2,30 @@ import { useRef, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { useKeyboardControls } from '@react-three/drei';
 import { useGame } from '../lib/stores/useGame';
-import { checkCollisions, PHYSICS_CONSTANTS } from '../lib/physics';
-import { Controls } from '../App';
+import { checkCollisions, checkEnemyPlayerCollision, PHYSICS_CONSTANTS, ENEMY_CONSTANTS } from '../lib/physics';
+import { Controls } from '../BoilerplateApp';
 import * as THREE from 'three';
 
 const PLAYER_SIZE = { width: 1, height: 1, depth: 1 };
 
 export function SimplePlayer() {
   const meshRef = useRef<THREE.Mesh>(null);
-  const { 
-    playerPosition, 
-    playerVelocity, 
-    updatePlayer, 
+  const {
+    playerPosition,
+    playerVelocity,
+    updatePlayer,
     platforms,
     isGrounded,
     setGrounded,
     resetGame,
     gameState,
-    addScore
+    addScore,
+    enemies,
+    removeEnemy,
+    damagePlayer,
+    invincible,
+    invincibilityTimer,
+    decrementInvincibilityTimer
   } = useGame();
 
   const [subscribe, get] = useKeyboardControls<Controls>();
@@ -99,29 +105,71 @@ export function SimplePlayer() {
       setGrounded(true);
     }
 
+    // Check collisions with all enemies
+    for (const enemy of enemies) {
+      if (!enemy.isAlive) continue;
+
+      const collision = checkEnemyPlayerCollision(
+        newPosition,
+        PLAYER_SIZE,
+        newVelocity,
+        enemy.position,
+        enemy.size
+      );
+
+      if (collision.type === 'stomp') {
+        // Kill enemy and bounce player
+        removeEnemy(enemy.id);
+        newVelocity.y = ENEMY_CONSTANTS.STOMP_BOUNCE;
+        addScore(100); // Award points for killing enemy
+        console.log('Enemy stomped!');
+      } else if (collision.type === 'hit' && !invincible) {
+        // Damage player and apply knockback
+        damagePlayer(1);
+        newVelocity.x = collision.knockbackDirection! * ENEMY_CONSTANTS.KNOCKBACK_FORCE;
+        newVelocity.y = ENEMY_CONSTANTS.KNOCKBACK_UP_FORCE;
+        console.log('Player hit by enemy!');
+      }
+    }
+
     // Update player state BEFORE updating mesh
     updatePlayer(newPosition, newVelocity);
   });
+
+  // Handle invincibility timer
+  useEffect(() => {
+    if (invincibilityTimer > 0) {
+      const timer = setInterval(() => {
+        decrementInvincibilityTimer();
+      }, 100);
+
+      return () => clearInterval(timer);
+    }
+  }, [invincibilityTimer, decrementInvincibilityTimer]);
 
   // Update mesh position when playerPosition changes
   useEffect(() => {
     if (meshRef.current && playerPosition) {
       meshRef.current.position.set(
-        playerPosition.x, 
-        playerPosition.y, 
+        playerPosition.x,
+        playerPosition.y,
         playerPosition.z
       );
     }
   }, [playerPosition]);
 
   return (
-    <mesh 
-      ref={meshRef} 
+    <mesh
+      ref={meshRef}
       position={[playerPosition.x, playerPosition.y, playerPosition.z]}
       castShadow
     >
       <boxGeometry args={[PLAYER_SIZE.width, PLAYER_SIZE.height, PLAYER_SIZE.depth]} />
-      <meshLambertMaterial color="#FF6B6B" />
+      <meshLambertMaterial
+        color={invincible ? "#FFD700" : "#FF6B6B"}
+        opacity={invincible ? 0.7 : 1.0}
+        transparent={invincible}
+      />
     </mesh>
   );
 }

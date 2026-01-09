@@ -3,16 +3,18 @@ import { useFrame, useThree } from '@react-three/fiber';
 import { OrthographicCamera } from '@react-three/drei';
 import { SimplePlayer } from './SimplePlayer';
 import { SimplePlatform } from './SimplePlatform';
+import { SimpleEnemy } from './SimpleEnemy';
 import { useGame } from '../lib/stores/useGame';
 import * as THREE from 'three';
 
 export function SimpleGame() {
   const { camera } = useThree();
   const cameraRef = useRef<THREE.OrthographicCamera>(null);
-  const { 
-    playerPosition, 
-    platforms, 
-    initializeGame, 
+  const {
+    playerPosition,
+    platforms,
+    enemies,
+    initializeGame,
     gameState,
     resetGame,
     level
@@ -73,6 +75,20 @@ export function SimpleGame() {
           size={platform.size}
           color={platform.color}
         />
+      ))}
+
+      {/* Enemy Characters */}
+      {enemies.map((enemy) => (
+        enemy.isAlive && (
+          <SimpleEnemy
+            key={enemy.id}
+            id={enemy.id}
+            initialPosition={enemy.position}
+            initialDirection={enemy.direction}
+            patrolBounds={enemy.patrolBounds}
+            size={enemy.size}
+          />
+        )
       ))}
 
       {/* Sky Background */}

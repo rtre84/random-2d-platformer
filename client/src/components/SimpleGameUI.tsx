@@ -2,7 +2,7 @@ import { useGame } from '../lib/stores/useGame';
 import { useAudio } from '../lib/stores/useAudio';
 
 export function SimpleGameUI() {
-  const { gameState, score, level, resetGame, setGameState } = useGame();
+  const { gameState, score, level, resetGame, setGameState, playerHealth, maxHealth } = useGame();
   const { toggleMute, isMuted } = useAudio();
 
   const startGame = () => {
@@ -32,6 +32,7 @@ export function SimpleGameUI() {
         fontSize: '16px',
         fontWeight: '500'
       }}>
+        <div>Health: {"❤️".repeat(playerHealth)}{"🤍".repeat(maxHealth - playerHealth)}</div>
         <div>Score: {score}</div>
         <div>Level: {level}</div>
         <div>Status: {gameState}</div>
@@ -91,13 +92,14 @@ export function SimpleGameUI() {
           }}>
             2D Platformer
           </h1>
-          <p style={{ 
-            margin: '0 0 30px 0', 
+          <p style={{
+            margin: '0 0 30px 0',
             fontSize: '18px',
             lineHeight: '1.5',
             color: '#ccc'
           }}>
-            Jump on platforms and explore!<br />
+            Jump on platforms and avoid enemies!<br />
+            Stomp on enemies to defeat them.<br />
             Use WASD or arrow keys to move.
           </p>
           <button 
