@@ -19,6 +19,8 @@ interface CollisionResult {
   position: Position;
   velocity: Position;
   isGrounded: boolean;
+  isWalledLeft: boolean;
+  isWalledRight: boolean;
 }
 
 // Simple AABB (Axis-Aligned Bounding Box) collision detection
@@ -53,6 +55,8 @@ export function checkCollisions(
   let newPosition = { ...playerPosition };
   let newVelocity = { ...velocity };
   let isGrounded = false;
+  let isWalledLeft = false;
+  let isWalledRight = false;
 
   const playerHalfWidth = playerSize.width / 2;
   const playerHalfHeight = playerSize.height / 2;
@@ -73,11 +77,13 @@ export function checkCollisions(
 
       // Resolve collision on the axis with the smallest overlap (shortest separation distance)
       if (overlapX < overlapY && overlapX < overlapZ) {
-        // Horizontal collision (X-axis)
+        // Horizontal collision (X-axis) - Wall detection
         if (newPosition.x < platform.position.x) {
           newPosition.x = platform.position.x - platformHalfWidth - playerHalfWidth - 0.01;
+          isWalledRight = true; // Wall is on the right
         } else {
           newPosition.x = platform.position.x + platformHalfWidth + playerHalfWidth + 0.01;
+          isWalledLeft = true; // Wall is on the left
         }
         newVelocity.x = 0;
       } else if (overlapY < overlapZ) {
@@ -111,7 +117,9 @@ export function checkCollisions(
   return {
     position: newPosition,
     velocity: newVelocity,
-    isGrounded
+    isGrounded,
+    isWalledLeft,
+    isWalledRight
   };
 }
 
@@ -152,6 +160,31 @@ export const PHYSICS_CONSTANTS = {
   FRICTION: 0.85,
   MAX_FALL_SPEED: -20,
   MAX_MOVE_SPEED: 15
+};
+
+// Advanced movement constants
+export const ADVANCED_MOVEMENT_CONSTANTS = {
+  // Double Jump
+  DOUBLE_JUMP_FORCE: 11,
+  MAX_JUMPS: 2,
+
+  // Wall Mechanics
+  WALL_SLIDE_SPEED: -5,
+  WALL_JUMP_FORCE_X: 10,
+  WALL_JUMP_FORCE_Y: 12,
+
+  // Dash
+  DASH_SPEED: 25,
+  DASH_DURATION: 0.15,
+  DASH_COOLDOWN: 1.0,
+
+  // Variable Jump
+  JUMP_FORCE_DECAY_RATE: 30,
+  JUMP_HOLD_TIME: 0.25,
+
+  // Coyote Time & Buffer
+  COYOTE_TIME: 0.15,
+  JUMP_BUFFER_TIME: 0.1,
 };
 
 // Enemy constants

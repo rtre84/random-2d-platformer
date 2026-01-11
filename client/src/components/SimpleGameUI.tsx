@@ -1,8 +1,21 @@
 import { useGame } from '../lib/stores/useGame';
 import { useAudio } from '../lib/stores/useAudio';
+import { ADVANCED_MOVEMENT_CONSTANTS } from '../lib/physics';
 
 export function SimpleGameUI() {
-  const { gameState, score, level, resetGame, setGameState, playerHealth, maxHealth } = useGame();
+  const {
+    gameState,
+    score,
+    level,
+    resetGame,
+    setGameState,
+    playerHealth,
+    maxHealth,
+    jumpsRemaining,
+    dashCooldownTimer,
+    isWalledLeft,
+    isWalledRight
+  } = useGame();
   const { toggleMute, isMuted } = useAudio();
 
   const startGame = () => {
@@ -51,7 +64,10 @@ export function SimpleGameUI() {
       }}>
         <div style={{ marginBottom: '8px', fontWeight: 'bold' }}>Controls:</div>
         <div>← → A D - Move</div>
-        <div>↑ W Space - Jump</div>
+        <div>↑ W Space - Jump (Hold for higher)</div>
+        <div>Double Tap Jump - Double Jump</div>
+        <div>Shift - Dash</div>
+        <div>Wall + Jump - Wall Jump</div>
         <div>R - Restart</div>
         
         <button 
@@ -71,6 +87,60 @@ export function SimpleGameUI() {
           Sound: {isMuted ? 'OFF' : 'ON'}
         </button>
       </div>
+
+      {/* Advanced Mechanics Overlay - Bottom Center */}
+      {gameState === 'playing' && (
+        <div style={{
+          position: 'absolute',
+          bottom: '20px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          display: 'flex',
+          gap: '20px',
+          color: 'white',
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          padding: '12px 20px',
+          borderRadius: '8px',
+          fontSize: '14px',
+          fontWeight: 'bold',
+          alignItems: 'center'
+        }}>
+          {/* Dash Cooldown */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}>
+            <span>Dash:</span>
+            <div style={{
+              width: '100px',
+              height: '8px',
+              backgroundColor: 'rgba(255, 255, 255, 0.3)',
+              borderRadius: '4px',
+              overflow: 'hidden'
+            }}>
+              <div style={{
+                width: `${Math.max(0, 100 - (dashCooldownTimer / ADVANCED_MOVEMENT_CONSTANTS.DASH_COOLDOWN) * 100)}%`,
+                height: '100%',
+                backgroundColor: dashCooldownTimer <= 0 ? '#00FF00' : '#FF9900',
+                transition: 'width 0.1s'
+              }} />
+            </div>
+          </div>
+
+          {/* Jump Count */}
+          <div>
+            Jumps: {Array(jumpsRemaining).fill('⬆️').join('')}{Array(ADVANCED_MOVEMENT_CONSTANTS.MAX_JUMPS - jumpsRemaining).fill('⬇️').join('')}
+          </div>
+
+          {/* Wall Contact Indicator */}
+          {(isWalledLeft || isWalledRight) && (
+            <div style={{ color: '#FFD700' }}>
+              🧱 Wall Slide
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Welcome Screen */}
       {gameState === 'ready' && (
@@ -100,7 +170,10 @@ export function SimpleGameUI() {
           }}>
             Jump on platforms and avoid enemies!<br />
             Stomp on enemies to defeat them.<br />
-            Use WASD or arrow keys to move.
+            Use WASD or arrow keys to move.<br />
+            <span style={{ color: '#4ECDC4', fontWeight: 'bold' }}>
+              Double jump, wall jump, and dash!
+            </span>
           </p>
           <button 
             onClick={startGame}

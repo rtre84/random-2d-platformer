@@ -11,7 +11,8 @@ export enum Controls {
   left = 'left',
   right = 'right',
   jump = 'jump',
-  restart = 'restart'
+  restart = 'restart',
+  dash = 'dash'
 }
 
 // Keyboard mapping for game controls
@@ -20,6 +21,7 @@ const controlMap = [
   { name: Controls.right, keys: ["KeyD", "ArrowRight"] },
   { name: Controls.jump, keys: ["KeyW", "ArrowUp", "Space"] },
   { name: Controls.restart, keys: ["KeyR"] },
+  { name: Controls.dash, keys: ["ShiftLeft", "ShiftRight"] },
 ];
 
 /**

@@ -35,6 +35,14 @@ interface GameStore {
   invincible: boolean;
   invincibilityTimer: number;
 
+  // Advanced Movement State
+  jumpsRemaining: number;
+  dashCooldownTimer: number;
+  isDashing: boolean;
+  dashDirection: number;
+  isWalledLeft: boolean;
+  isWalledRight: boolean;
+
   // World State
   platforms: Platform[];
   enemies: Enemy[];
@@ -52,6 +60,14 @@ interface GameStore {
   damagePlayer: (damage: number) => void;
   setInvincible: (invincible: boolean) => void;
   decrementInvincibilityTimer: () => void;
+  // Advanced Movement Actions
+  setJumpsRemaining: (jumps: number) => void;
+  consumeJump: () => boolean;
+  resetJumps: () => void;
+  setDashState: (isDashing: boolean, direction?: number) => void;
+  setDashCooldown: (time: number) => void;
+  decrementDashCooldown: (delta: number) => void;
+  setWallContact: (left: boolean, right: boolean) => void;
 }
 
 // Generate platforms for the level
@@ -159,6 +175,13 @@ export const useGame = create<GameStore>()(
     maxHealth: 3,
     invincible: false,
     invincibilityTimer: 0,
+    // Advanced Movement State
+    jumpsRemaining: 2,
+    dashCooldownTimer: 0,
+    isDashing: false,
+    dashDirection: 0,
+    isWalledLeft: false,
+    isWalledRight: false,
     platforms: [],
     enemies: [],
     
@@ -178,6 +201,12 @@ export const useGame = create<GameStore>()(
         playerHealth: 3,
         invincible: false,
         invincibilityTimer: 0,
+        jumpsRemaining: 2,
+        dashCooldownTimer: 0,
+        isDashing: false,
+        dashDirection: 0,
+        isWalledLeft: false,
+        isWalledRight: false,
         platforms,
         enemies
       });
@@ -207,6 +236,12 @@ export const useGame = create<GameStore>()(
         playerHealth: 3,
         invincible: false,
         invincibilityTimer: 0,
+        jumpsRemaining: 2,
+        dashCooldownTimer: 0,
+        isDashing: false,
+        dashDirection: 0,
+        isWalledLeft: false,
+        isWalledRight: false,
         platforms,
         enemies
       });
@@ -224,6 +259,12 @@ export const useGame = create<GameStore>()(
         playerHealth: 3,
         invincible: false,
         invincibilityTimer: 0,
+        jumpsRemaining: 2,
+        dashCooldownTimer: 0,
+        isDashing: false,
+        dashDirection: 0,
+        isWalledLeft: false,
+        isWalledRight: false,
         platforms,
         enemies
       });
@@ -272,6 +313,39 @@ export const useGame = create<GameStore>()(
       if (newTimer <= 0) {
         set({ invincible: false });
       }
+    },
+
+    // Advanced Movement Actions
+    setJumpsRemaining: (jumps) => set({ jumpsRemaining: jumps }),
+
+    consumeJump: () => {
+      const { jumpsRemaining } = get();
+      if (jumpsRemaining > 0) {
+        set({ jumpsRemaining: jumpsRemaining - 1 });
+        return true;
+      }
+      return false;
+    },
+
+    resetJumps: () => {
+      set({ jumpsRemaining: 2 });
+    },
+
+    setDashState: (isDashing, direction = 0) => {
+      set({ isDashing, dashDirection: direction });
+    },
+
+    setDashCooldown: (time) => {
+      set({ dashCooldownTimer: time });
+    },
+
+    decrementDashCooldown: (delta) => {
+      const { dashCooldownTimer } = get();
+      set({ dashCooldownTimer: Math.max(0, dashCooldownTimer - delta) });
+    },
+
+    setWallContact: (left, right) => {
+      set({ isWalledLeft: left, isWalledRight: right });
     }
   }))
 );
