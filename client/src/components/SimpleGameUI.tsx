@@ -14,7 +14,8 @@ export function SimpleGameUI() {
     jumpsRemaining,
     dashCooldownTimer,
     isWalledLeft,
-    isWalledRight
+    isWalledRight,
+    nextLevel
   } = useGame();
   const { toggleMute, isMuted } = useAudio();
 
@@ -70,7 +71,7 @@ export function SimpleGameUI() {
         <div>Wall + Jump - Wall Jump</div>
         <div>R - Restart</div>
         
-        <button 
+        <button
           onClick={toggleMute}
           style={{
             marginTop: '12px',
@@ -85,6 +86,25 @@ export function SimpleGameUI() {
           }}
         >
           Sound: {isMuted ? 'OFF' : 'ON'}
+        </button>
+
+        {/* Debug: Level Changer */}
+        <button
+          onClick={nextLevel}
+          style={{
+            marginTop: '8px',
+            padding: '6px 12px',
+            backgroundColor: '#4ECDC4',
+            color: 'white',
+            border: 'none',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            fontSize: '12px',
+            fontWeight: 'bold',
+            pointerEvents: 'auto'
+          }}
+        >
+          Next Level (Debug)
         </button>
       </div>
 

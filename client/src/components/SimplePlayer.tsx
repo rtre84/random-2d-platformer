@@ -1,12 +1,14 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { useKeyboardControls } from '@react-three/drei';
+import { useKeyboardControls, useTexture } from '@react-three/drei';
 import { useGame } from '../lib/stores/useGame';
 import { checkCollisions, checkEnemyPlayerCollision, PHYSICS_CONSTANTS, ENEMY_CONSTANTS, ADVANCED_MOVEMENT_CONSTANTS } from '../lib/physics';
 import { Controls } from '../BoilerplateApp';
 import * as THREE from 'three';
+import { getAnimationState, calculateFrameIndex, calculateUVOffset, getFacingDirection } from '../lib/spriteAnimation';
+import { SPRITE_SHEETS, AnimationState } from '../data/spriteConfig';
 
-const PLAYER_SIZE = { width: 1, height: 1, depth: 1 };
+const PLAYER_SIZE = { width: 1, height: 1.5, depth: 1 };
 
 export function SimplePlayer() {
   const meshRef = useRef<THREE.Mesh>(null);
@@ -40,7 +42,28 @@ export function SimplePlayer() {
     setWallContact
   } = useGame();
 
+  // Load all sprite sheet textures
+  const spriteTextures = {
+    idle: useTexture('/sprites/player-idle.png'),
+    run: useTexture('/sprites/player-run.png'),
+    jump: useTexture('/sprites/player-jump.png'),
+    fall: useTexture('/sprites/player-fall.png'),
+    dash: useTexture('/sprites/player-dash.png')
+  };
+
+  // Set texture filtering for pixel art (crisp pixels, no blur)
+  Object.values(spriteTextures).forEach(texture => {
+    texture.magFilter = THREE.NearestFilter;
+    texture.minFilter = THREE.NearestFilter;
+  });
+
   const [subscribe, get] = useKeyboardControls<Controls>();
+
+  // Animation state
+  const [currentAnimation, setCurrentAnimation] = useState<AnimationState>('idle');
+  const [currentFrame, setCurrentFrame] = useState(0);
+  const animationTimeRef = useRef(0);
+  const facingDirectionRef = useRef<'left' | 'right'>('right');
 
   // Frame-accurate timing refs
   const coyoteTimeRef = useRef(0);
@@ -313,7 +336,43 @@ export function SimplePlayer() {
       }
     }
 
-    // ===== PHASE 11: FINAL STATE UPDATE =====
+    // ===== PHASE 11: SPRITE ANIMATION UPDATE =====
+
+    // Update animation time
+    animationTimeRef.current += delta;
+
+    // Determine current animation state
+    const newAnimationState = getAnimationState(
+      nowGrounded,
+      newVelocity.x,
+      newVelocity.y,
+      isDashing
+    );
+
+    // Reset animation time when changing states
+    if (newAnimationState !== currentAnimation) {
+      animationTimeRef.current = 0;
+      setCurrentAnimation(newAnimationState);
+    }
+
+    // Calculate current frame
+    const spriteData = SPRITE_SHEETS[newAnimationState];
+    const frameIndex = calculateFrameIndex(animationTimeRef.current, spriteData);
+    setCurrentFrame(frameIndex);
+
+    // Update facing direction
+    facingDirectionRef.current = getFacingDirection(
+      newVelocity.x,
+      facingDirectionRef.current
+    );
+
+    // Apply UV offset to current texture
+    const currentTexture = spriteTextures[newAnimationState];
+    const uvData = calculateUVOffset(frameIndex, spriteData);
+    currentTexture.offset.set(uvData.offsetX, uvData.offsetY);
+    currentTexture.repeat.set(uvData.repeatX, uvData.repeatY);
+
+    // ===== PHASE 12: FINAL STATE UPDATE =====
 
     updatePlayer(newPosition, newVelocity);
   });
@@ -340,21 +399,31 @@ export function SimplePlayer() {
     }
   }, [playerPosition]);
 
+  // Get current texture based on animation state
+  const currentTexture = spriteTextures[currentAnimation];
+
+  // Calculate sprite scale for flipping
+  const spriteScaleX = facingDirectionRef.current === 'left' ? -1 : 1;
+
   return (
     <mesh
       ref={meshRef}
       position={[playerPosition.x, playerPosition.y, playerPosition.z]}
+      scale={[spriteScaleX, 1, 1]}
       castShadow
     >
-      <boxGeometry args={[PLAYER_SIZE.width, PLAYER_SIZE.height, PLAYER_SIZE.depth]} />
-      <meshLambertMaterial
-        color={
-          isDashing ? "#00FFFF" :      // Cyan during dash
-          invincible ? "#FFD700" :      // Gold when invincible
-          "#FF6B6B"                     // Normal red
-        }
+      <planeGeometry args={[PLAYER_SIZE.width, PLAYER_SIZE.height]} />
+      <meshBasicMaterial
+        map={currentTexture}
+        transparent={true}
         opacity={invincible ? 0.7 : 1.0}
-        transparent={invincible}
+        color={
+          isDashing ? "#00FFFF" :      // Cyan tint during dash
+          invincible ? "#FFD700" :      // Gold tint when invincible
+          "#FFFFFF"                     // White (no tint) for normal
+        }
+        side={THREE.DoubleSide}
+        alphaTest={0.1}
       />
     </mesh>
   );

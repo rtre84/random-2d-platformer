@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { devtools } from "zustand/middleware";
 
 interface AudioState {
   backgroundMusic: HTMLAudioElement | null;
@@ -17,7 +18,8 @@ interface AudioState {
   playSuccess: () => void;
 }
 
-export const useAudio = create<AudioState>((set, get) => ({
+export const useAudio = create<AudioState>()(
+  devtools((set, get) => ({
   backgroundMusic: null,
   hitSound: null,
   successSound: null,
@@ -71,4 +73,4 @@ export const useAudio = create<AudioState>((set, get) => ({
       });
     }
   }
-}));
+}), { name: 'AudioStore' }));
